@@ -1,0 +1,12 @@
+.vscode
+result*
+.direnv/
+.pre-commit-config.yaml
+.nixos-test-history
+TODO.MD
+
+# Local debugging
+img
+*.raw
+mnt/
+tree/
