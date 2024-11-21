@@ -10,8 +10,11 @@ let
 
   # Allowed root paths for each extension type
   pathMappings = {
-    sysext = "/opt";
-    confext = "/etc";
+    sysext = [
+      "/opt"
+      "/usr"
+    ];
+    confext = [ "/etc" ];
   };
 
   # Helper function to fetch the permitted root path for a given extension type
@@ -24,11 +27,11 @@ let
 
   # Ensures a string starts with a given prefix. Otherwise, throw an error.
   ensurePrefix =
-    prefix: str:
-    if lib.strings.hasPrefix prefix str then
+    prefixes: str:
+    if lib.lists.any (prefix: lib.strings.hasPrefix prefix str) prefixes then
       str
     else
-      throw "[naext] The string '${str}' must start with '${prefix}'";
+      throw "[naext] The string '${str}' must start with ${lib.concatStringsSep " or " prefixes}";
 
   # Helper function to format extension release metadata.
   createExtensionReleaseFile = name: ''
