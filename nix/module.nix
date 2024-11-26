@@ -1,16 +1,30 @@
 {
   config,
   lib,
-  options,
   pkgs,
   ...
 }:
 let
   mkExt = pkgs.callPackage ./lib/mkExt.nix { };
 
+  extensionReleasePath = {
+    sysext = "/usr/lib/extension-release.d/";
+    confext = "/etc/extension-release.d/";
+  };
+
+  getExtensionReleasePathBy =
+    extensionType:
+    let
+      default = throw "[naext] Unsupported extension type '${extensionType}'";
+    in
+    lib.attrByPath [ extensionType ] default extensionReleasePath;
+
   # Allowed root paths for each extension type
+  # Hint: To allow extending `/nix ` the corresponding environment variable needs to be set:
+  # SYSTEMD_SYSEXT_HIERARCHIES="/usr/:/opt/:/nix/"
   pathMappings = {
     sysext = [
+      "/nix"
       "/opt"
       "/usr"
     ];
@@ -34,59 +48,64 @@ let
       throw "[naext] The string '${str}' must start with ${lib.concatStringsSep " or " prefixes}";
 
   # Helper function to format extension release metadata.
-  createExtensionReleaseFile = name: ''
-    mkdir -p $out/etc/extension-release.d
+  createExtensionReleaseFile =
+    type: name:
+    # bash
+    ''
+      mkdir -p $out${getExtensionReleasePathBy type}
 
-    cat >$out/etc/extension-release.d/extension-release.${name} <<EOF
-    ID=nixos
-    VERSION_ID="24.11"
-    CONFEXT_SCOPE=system initrd
-    EOF
-  '';
+      cat >$out${getExtensionReleasePathBy type}/extension-release.${name} <<EOF
+      ID=nixos
+      VERSION_ID="24.11"
+      CONFEXT_SCOPE=system initrd
+      EOF
+    '';
 
   # Create the tree for an extension image
   mkExtTree =
     type: files: name:
-    pkgs.runCommand "tree" { } ''
-      set -euo pipefail
+    pkgs.runCommand "tree" { }
+      # bash
+      ''
+        set -euo pipefail
 
-      ${createExtensionReleaseFile name}
+        ${createExtensionReleaseFile type name}
 
-      mkFile() {
-        src="$1"
-        target="$2"
+        mkFile() {
+          src="$1"
+          target="$2"
 
-        if [[ "$src" = *'*'* ]]; then
-          # If the source name contains '*', perform globbing.
-          mkdir -p "$out/$target"
-          for fn in $src; do
-              cp -rL "$fn" "$out/$target/"
-          done
-        else
-          mkdir -p "$out/$(dirname "$target")"
-          if ! [ -e "$out/$target" ]; then
-            cp -rL "$src" "$out/$target"
+          if [[ "$src" = *'*'* ]]; then
+            # If the source name contains '*', perform globbing.
+            mkdir -p "$out/$target"
+            for fn in $src; do
+                cp -rL "$fn" "$out/$target/"
+            done
           else
-            echo "duplicate entry $target -> $src"
-            if [ "$(readlink "$out/$target")" != "$src" ]; then
-              echo "mismatched duplicate entry $(readlink "$out/$target") <-> $src"
-              ret=1
-              continue
+            mkdir -p "$out/$(dirname "$target")"
+            if ! [ -e "$out/$target" ]; then
+              cp -rL "$src" "$out/$target"
+            else
+              echo "duplicate entry $target -> $src"
+              if [ "$(readlink "$out/$target")" != "$src" ]; then
+                echo "mismatched duplicate entry $(readlink "$out/$target") <-> $src"
+                ret=1
+                continue
+              fi
             fi
           fi
-        fi
-      }
+        }
 
-      ${lib.concatMapStringsSep "\n" (
-        fileEntry:
-        lib.escapeShellArgs [
-          "mkFile"
-          # Force local source paths to be added to the store
-          "${fileEntry.source}"
-          (ensurePrefix (getPathPrefix type) fileEntry.target)
-        ]
-      ) (lib.attrValues files)}
-    '';
+        ${lib.concatMapStringsSep "\n" (
+          fileEntry:
+          lib.escapeShellArgs [
+            "mkFile"
+            # Force local source paths to be added to the store
+            "${fileEntry.source}"
+            (ensurePrefix (getPathPrefix type) fileEntry.target)
+          ]
+        ) (lib.attrValues files)}
+      '';
 
   fileSubmodule = lib.types.submodule (
     {
@@ -196,11 +215,13 @@ in
                 let
                   # The configuration of the current extension we're dealing with.
                   self = cfg.extensions."${name}";
+
                   # Add the extension-release to the files.
                   mergedFiles = self.files // {
-                    "/etc/extension-release.d/extension-release.${name}" = {
+                    "${getExtensionReleasePathBy self.extensionType}extension-release.${name}" = {
                       source = self.extension-release;
-                      target = "/etc/extension-release.d/extension-release.${name}";
+                      target = "${getExtensionReleasePathBy self.extensionType}extension-release.${name}";
+
                     };
                   };
                   # The tree to create the extension image from.
