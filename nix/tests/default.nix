@@ -26,6 +26,7 @@ let
     };
 in
 {
+  appliance = runNixosTest ./appliance.nix;
   basic = runNixosTest ./basic.nix;
 
 }
