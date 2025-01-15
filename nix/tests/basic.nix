@@ -6,7 +6,7 @@
   ...
 }:
 {
-  name = "confext-basic";
+  name = "basic";
   nodes = {
     machine = _: {
       naext = {
