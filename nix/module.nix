@@ -5,6 +5,9 @@
   ...
 }:
 let
+  nixosRelease = config.system.nixos.release;
+  inherit (config.system.nixos) distroId;
+
   mkExt = pkgs.callPackage ./lib/mkExt.nix { };
 
   extensionReleasePath = {
@@ -47,29 +50,14 @@ let
     else
       throw "[naext] The string '${str}' must start with ${lib.concatStringsSep " or " prefixes}";
 
-  # Helper function to format extension release metadata.
-  createExtensionReleaseFile =
-    type: name:
-    # bash
-    ''
-      mkdir -p $out${getExtensionReleasePathBy type}
-
-      cat >$out${getExtensionReleasePathBy type}/extension-release.${name} <<EOF
-      ID=nixos
-      VERSION_ID="24.11"
-      CONFEXT_SCOPE=system initrd
-      EOF
-    '';
-
   # Create the tree for an extension image
   mkExtTree =
-    type: files: name:
+    type: files:
     pkgs.runCommand "tree" { }
       # bash
       ''
         set -euo pipefail
 
-        ${createExtensionReleaseFile type name}
 
         mkFile() {
           src="$1"
@@ -176,14 +164,9 @@ in
                 description = "Contents of the Extension Release file.";
                 type = lib.types.lines;
                 default = ''
-                  ID=nixos
-                  VERSION_ID="24.11"
-                  CONFEXT_SCOPE=system initrd
-                '';
-                example = lib.literalExpression ''
-                  ID=nixos
-                  VERSION_ID="24.11"
-                  CONFEXT_SCOPE=system initrd
+                  ID=${distroId}
+                  VERSION_ID="${nixosRelease}"
+                  CONFEXT_SCOPE=system
                 '';
               };
               files = lib.mkOption {
@@ -219,13 +202,13 @@ in
                   # Add the extension-release to the files.
                   mergedFiles = self.files // {
                     "${getExtensionReleasePathBy self.extensionType}extension-release.${name}" = {
-                      source = self.extension-release;
+                      source = pkgs.writeText "extension-release" self.extension-release;
                       target = "${getExtensionReleasePathBy self.extensionType}extension-release.${name}";
 
                     };
                   };
                   # The tree to create the extension image from.
-                  tree = mkExtTree self.extensionType mergedFiles self.name;
+                  tree = mkExtTree self.extensionType mergedFiles;
                   # Determin the function to use for creating the extension image.
                   mkExtMethod =
                     if self.imageFormat == "verity" then

@@ -27,8 +27,8 @@
       systems = import inputs.systems;
       imports = [ inputs.pre-commit-hooks-nix.flakeModule ];
       flake.nixosModules = {
-        naext = import ./nix/module.nix;
         dm-verity = import ./nix/dm-verity.nix;
+        naext = import ./nix/module.nix;
       };
       perSystem =
         {
