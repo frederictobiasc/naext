@@ -28,6 +28,6 @@ in
 {
   appliance = runNixosTest ./appliance.nix;
   basic = runNixosTest ./basic.nix;
-
+  with-importctl = runNixosTest ./with-importctl.nix;
 }
 // heavyTests
