@@ -20,6 +20,7 @@ let
       imports = [
         module
       ];
+      interactive.defaults = ./interactive.nix;
       extraBaseModules = {
         imports = builtins.attrValues nixosModules;
       };

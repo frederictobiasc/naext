@@ -113,8 +113,12 @@ in
       # Set NIX_DISK_IMAGE so that the qemu script finds the right disk image.
       os.environ['NIX_DISK_IMAGE'] = tmp_disk_image.name
 
+      machine.wait_for_unit("multi-user.target")
+
       machine.copy_from_host("${confext.image}", "/var/lib/confexts/${confext.name}.${confext.extensionType}.raw")
       machine.copy_from_host("${sysext.image}", "/var/lib/extensions/${sysext.name}.${sysext.extensionType}.raw")
+      # Make sure sshd key generation finished before extension images render FS immutable
+      machine.wait_for_unit("multi-user.target")
       machine.succeed("systemd-confext refresh")
       # By default, extending the /nix hierarchy is not allowed. This can be overwritten.
       machine.succeed("SYSTEMD_SYSEXT_HIERARCHIES=\"/usr/:/opt/:/nix/\" systemd-sysext refresh")
