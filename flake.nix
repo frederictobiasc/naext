@@ -99,6 +99,7 @@
                 nixfmt-rfc-style
                 statix
                 util-linux
+                openstackclient-full
               ];
             };
         };
