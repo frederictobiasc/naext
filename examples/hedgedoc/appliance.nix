@@ -1,4 +1,4 @@
-# Appliance image-specific configuration for the openStack example
+# Appliance image-specific configuration
 # See https://github.com/NixOS/nixpkgs/blob/fbdf0b99ff76a37e8c8185525495f676a881c572/nixos/doc/manual/installation/building-images-via-systemd-repart.chapter.md
 {
   config,
@@ -15,6 +15,8 @@ in
     initrd = {
       availableKernelModules = [
         "virtio_blk"
+        "virtio_net"
+        "virtio_pci"
         "virtio_rng"
       ];
       systemd = {
@@ -34,10 +36,13 @@ in
   };
 
   imports = [ "${modulesPath}/image/repart.nix" ];
-  services.openssh.enable = true;
-  users.users.root.openssh.authorizedKeys.keys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMbdTWamOCcGSsd3w6O86ftuYnAe4I+Xh9RBSskoQi9u istobic@secuprobook-fch"
-  ];
+  services = {
+    openssh.enable = true;
+    cloud-init.enable = true;
+  };
+  #users.users.root.openssh.authorizedKeys.keys = [
+  #  "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMbdTWamOCcGSsd3w6O86ftuYnAe4I+Xh9RBSskoQi9u istobic@secuprobook-fch"
+  #];
   fileSystems."/".device = "/dev/disk/by-label/nixos";
   image.repart = {
     name = "image";

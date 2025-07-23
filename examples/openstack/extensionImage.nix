@@ -1,5 +1,3 @@
-# Enable building a NixOS image with the NixOS image builder
-# Provide the extension image as a separate attribute
 { pkgs, ... }:
 let
   wwwRoot = "/usr/share/www";

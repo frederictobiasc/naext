@@ -32,18 +32,37 @@
       };
       perSystem =
         {
-          config,
           pkgs,
+          config,
           ...
         }:
+        let
+          hedgedocExample = import ./examples/hedgedoc {
+            inherit pkgs;
+            naextModule = inputs.self.nixosModules.naext;
+          };
+          openstackExample = import ./examples/openstack {
+            inherit pkgs;
+            naextModule = inputs.self.nixosModules.naext;
+          };
+        in
         {
-          checks =
-            { }
-            // (import ./nix/tests {
-              inherit (inputs.self) nixosModules;
-              inherit pkgs;
-              enableHeavyTests = false;
-            });
+          packages = {
+            hedgedocExampleAppliance = hedgedocExample.appliance;
+            hedgedocExampleExtensionImage = hedgedocExample.extensionImage;
+            openstackExampleAppliance = openstackExample.appliance;
+            openstackExampleExtensionImage = openstackExample.extensionImage;
+          };
+
+          checks = {
+            hedgedocExample = hedgedocExample.test;
+            openstackExample = openstackExample.test;
+          }
+          // (import ./nix/tests {
+            inherit (inputs.self) nixosModules;
+            inherit pkgs;
+            enableHeavyTests = false;
+          });
 
           pre-commit = {
             check.enable = true;
@@ -72,7 +91,7 @@
                     loopdev=$(systemd-dissect --attach $top/to-mount.raw)
 
                     # Wait until the data partition becomes available
-                    while [ ! -e "''\${loopdev}''\${partition}" ]; do
+                    while [ ! -e "''${loopdev}''${partition}" ]; do
                       sleep 0.1 # adjust the delay as necessary
                     done
 
@@ -80,7 +99,7 @@
                     if [ ! -e $top/mnt ]; then
                       mkdir $top/mnt
                     fi
-                    mount "''\${loopdev}''\${partition}" $top/mnt
+                    mount "''${loopdev}''${partition}" $top/mnt
                   '';
               example-basic-umount =
                 pkgs.writeShellScriptBin "example-basic-umount" # bash
@@ -99,7 +118,7 @@
               packages = with pkgs; [
                 example-basic-mount
                 example-basic-umount
-                nixfmt-rfc-style
+                nixfmt
                 statix
                 util-linux
                 openstackclient-full

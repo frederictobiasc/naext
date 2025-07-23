@@ -1,11 +1,4 @@
-# The integration test for the openStack example
-# ## Configuree
-#
-# - [X] Discovery-Service
-#   - [X] Read dispenser URL from metadata endpoint
-#   - [X] Import extension from endpoint
-#   - [X] Apply extension
-
+# The integration test for the OpenStack example
 {
   pkgs,
   ...
