@@ -48,7 +48,7 @@ let
     if lib.lists.any (prefix: lib.strings.hasPrefix prefix str) prefixes then
       str
     else
-      throw "[naext] The string '${str}' must start with ${lib.concatStringsSep " or " prefixes}";
+      builtins.trace "[naext] The string '${str}' should start with ${lib.concatStringsSep " or " prefixes}" str;
 
   # Create the tree for an extension image
   mkExtTree =
