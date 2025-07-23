@@ -59,14 +59,17 @@
               example-basic-mount =
                 pkgs.writeShellScriptBin "example-basic-mount" # bash
                   ''
+                    if [[ $# -ne 1 ]]; then
+                        echo "Usage: $(basename "$0") <path-to-img>"
+                    fi
                     partition=p1 # assume the data partition is p1
                     top=$(git rev-parse --show-toplevel)
                     set -eux
 
                     # Build the example image and mount it as a loop device
-                    nix-build $top/examples/basic.nix --out-link $top/result "$@"
-                    cp -rL $top/result $top/basic.raw
-                    loopdev=$(systemd-dissect --attach $top/basic.raw)
+                    #nix-build $top/examples/basic.nix --out-link $top/result
+                    cp -rL $1 $top/to-mount.raw
+                    loopdev=$(systemd-dissect --attach $top/to-mount.raw)
 
                     # Wait until the data partition becomes available
                     while [ ! -e "''\${loopdev}''\${partition}" ]; do
@@ -85,8 +88,8 @@
                     top=$(git rev-parse --show-toplevel)
                     set -eux
                     umount $top/mnt
-                    systemd-dissect --detach $top/basic.raw
-                    rm $top/result $top/basic.raw
+                    systemd-dissect --detach $top/to-mount.raw
+                    rm $top/result $top/to-mount.raw
                   '';
             in
             pkgs.mkShell {

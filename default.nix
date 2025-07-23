@@ -10,5 +10,5 @@ let
   outputs = import ./nix/outputs.nix { inherit pkgs; };
 in
 {
-  inherit (outputs) checks;
+  inherit (outputs) checks nixosModules;
 }
