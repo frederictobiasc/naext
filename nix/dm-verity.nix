@@ -44,6 +44,7 @@ in
   config = lib.mkIf cfg.enable {
     boot.kernelPatches = [
       enableVerityRoothashSig
-    ] ++ lib.optional (cfg.trustedKeys != [ ]) (provideTrustedKeys (mergeCertificates cfg.trustedKeys));
+    ]
+    ++ lib.optional (cfg.trustedKeys != [ ]) (provideTrustedKeys (mergeCertificates cfg.trustedKeys));
   };
 }

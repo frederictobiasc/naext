@@ -8,7 +8,7 @@ NixOS allows for building [Appliance Images](https://nixos.org/manual/nixos/unst
 
 Appliances are usually built generically. To be useful an appliance is augmented with specifics (think of configuration, programs) for a certain use case.
 
-## Offered Solution
+## Solution
 
 This project offers solutions to extend immutable appliances in a lightweight manner leveraging technologies provided by systemd and the kernel.
 

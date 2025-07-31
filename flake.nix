@@ -32,18 +32,37 @@
       };
       perSystem =
         {
-          config,
           pkgs,
+          config,
           ...
         }:
+        let
+          hedgedocExample = import ./examples/hedgedoc {
+            inherit pkgs;
+            naextModule = inputs.self.nixosModules.naext;
+          };
+          openstackExample = import ./examples/openstack {
+            inherit pkgs;
+            naextModule = inputs.self.nixosModules.naext;
+          };
+        in
         {
-          checks =
-            { }
-            // (import ./nix/tests {
-              inherit (inputs.self) nixosModules;
-              inherit pkgs;
-              enableHeavyTests = false;
-            });
+          packages = {
+            hedgedocExampleAppliance = hedgedocExample.appliance;
+            hedgedocExampleExtensionImage = hedgedocExample.extensionImage;
+            openstackExampleAppliance = openstackExample.appliance;
+            openstackExampleExtensionImage = openstackExample.extensionImage;
+          };
+
+          checks = {
+            hedgedocExample = hedgedocExample.test;
+            openstackExample = openstackExample.test;
+          }
+          // (import ./nix/tests {
+            inherit (inputs.self) nixosModules;
+            inherit pkgs;
+            enableHeavyTests = false;
+          });
 
           pre-commit = {
             check.enable = true;
@@ -59,17 +78,20 @@
               example-basic-mount =
                 pkgs.writeShellScriptBin "example-basic-mount" # bash
                   ''
+                    if [[ $# -ne 1 ]]; then
+                        echo "Usage: $(basename "$0") <path-to-img>"
+                    fi
                     partition=p1 # assume the data partition is p1
                     top=$(git rev-parse --show-toplevel)
                     set -eux
 
                     # Build the example image and mount it as a loop device
-                    nix-build $top/examples/basic.nix --out-link $top/result "$@"
-                    cp -rL $top/result $top/basic.raw
-                    loopdev=$(systemd-dissect --attach $top/basic.raw)
+                    #nix-build $top/examples/basic.nix --out-link $top/result
+                    cp -rL $1 $top/to-mount.raw
+                    loopdev=$(systemd-dissect --attach $top/to-mount.raw)
 
                     # Wait until the data partition becomes available
-                    while [ ! -e "''\${loopdev}''\${partition}" ]; do
+                    while [ ! -e "''${loopdev}''${partition}" ]; do
                       sleep 0.1 # adjust the delay as necessary
                     done
 
@@ -77,7 +99,7 @@
                     if [ ! -e $top/mnt ]; then
                       mkdir $top/mnt
                     fi
-                    mount "''\${loopdev}''\${partition}" $top/mnt
+                    mount "''${loopdev}''${partition}" $top/mnt
                   '';
               example-basic-umount =
                 pkgs.writeShellScriptBin "example-basic-umount" # bash
@@ -85,8 +107,8 @@
                     top=$(git rev-parse --show-toplevel)
                     set -eux
                     umount $top/mnt
-                    systemd-dissect --detach $top/basic.raw
-                    rm $top/result $top/basic.raw
+                    systemd-dissect --detach $top/to-mount.raw
+                    rm $top/result $top/to-mount.raw
                   '';
             in
             pkgs.mkShell {
@@ -96,9 +118,10 @@
               packages = with pkgs; [
                 example-basic-mount
                 example-basic-umount
-                nixfmt-rfc-style
+                nixfmt
                 statix
                 util-linux
+                openstackclient-full
               ];
             };
         };
