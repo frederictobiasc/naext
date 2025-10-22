@@ -39,6 +39,6 @@ naext = {
 
 Check out:
 
-- [Building an Image](./examples/basic.nix) with `nix-build ./examples/basic.nix`
-- [Basic Integration Test](./nix/tests/basic.nix) with `nix-build ./examples/basic.nix`
-- [Integration Test with verity protected extension image](./nix/tests/basic.nix) with `nix-build ./examples/basic.nix`
+- [Build an Appliance for OpenStack with discovery mechanism (pull)](./examples/openstack) with `nix build .#packages.x86_64-linux.openstackExampleAppliance`
+- [Build a Hedgedoc Appliance that expects it's extension image to be pushed](./nix/tests/basic.nix) with `nix build .#packages.x86_64-linux.hedgedocExampleAppliance`
+- [Basic Integration Test](./nix/tests/basic.nix)

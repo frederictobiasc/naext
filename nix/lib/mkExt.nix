@@ -42,13 +42,8 @@
         name: seed:
         pkgs.runCommand "hmac-256" { nativeBuildInputs = [ pkgs.openssl ]; } ''
           set -eux
-          # Compute HMAC using OpenSSL
           hmac=$(echo -n '${name}' | openssl dgst -sha256 -hmac '${seed}' | awk '{print $2}')
-
-          # Format the HMAC as a UUID (first 32 characters of the HMAC)
           uuid=''${hmac:0:8}-''${hmac:8:4}-''${hmac:12:4}-''${hmac:16:4}-''${hmac:20:12}
-
-          # Write the UUID to the output file
           echo -n $uuid > $out
         '';
     in
