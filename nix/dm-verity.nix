@@ -9,14 +9,14 @@ let
   enableVerityRoothashSig = {
     name = "enable_dm_verity_verify_roothash_sig";
     patch = null;
-    extraStructuredConfig = {
+    structuredExtraConfig = {
       DM_VERITY_VERIFY_ROOTHASH_SIG = lib.kernel.yes;
     };
   };
   provideTrustedKeys = keys: {
     name = "provide_config_system_trusted_keys";
     patch = null;
-    extraStructuredConfig = {
+    structuredExtraConfig = {
       SYSTEM_TRUSTED_KEYS.freeform = "${keys}";
     };
   };
