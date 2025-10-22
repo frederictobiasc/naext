@@ -7,7 +7,7 @@
 }:
 let
   cert_id = "a6b64f7fdadc8ba80554f9da58363cbee9b48d88";
-  cert = ./fixtures/cert.pem;
+  cert = ./fixtures/cert.crt;
   privk = ./fixtures/privk.pem;
 in
 {
@@ -26,7 +26,10 @@ in
         # Embed certificate in the kernel's keyring
         dm-verity = {
           enable = true;
-          trustedKeys = [ ./fixtures/cert.pem ];
+          trustedKeys = [
+            cert
+          ];
+          where = "userspace";
         };
 
         # Define our extension image.
@@ -53,10 +56,6 @@ in
     in
     # python
     ''
-      with subtest("Kernel was built with an additional certificate"):
-        keyring = machine.succeed("cat /proc/keys")
-        assert "${cert_id}" in keyring, "expected key not in kernel keyring"
-
       with subtest("Confext gets applied successfully"):
         machine.copy_from_host("${testExt.image}", "/var/lib/confexts/${testExt.name}.${testExt.extensionType}.raw")
         machine.succeed("systemd-confext refresh")

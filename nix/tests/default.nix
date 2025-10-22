@@ -9,7 +9,8 @@ let
   heavyTests =
     if enableHeavyTests then
       {
-        dm-verity = runNixosTest ./dm-verity.nix;
+        dm-verity-userspace = runNixosTest ./dm-verity-userspace.nix;
+        dm-verity-kernel = runNixosTest ./dm-verity-kernel.nix;
       }
     else
       { };
